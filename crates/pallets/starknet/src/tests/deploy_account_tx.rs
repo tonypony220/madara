@@ -4,6 +4,7 @@ use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{DeployAccountTransaction, EventWrapper};
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::TransactionSource;
+use mp_starknet::crypto::commitment::calculate_deploy_account_braavos_tx_hash;
 
 use super::mock::default_mock::*;
 use super::mock::*;
@@ -249,10 +250,13 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
             signature: signatures.try_into().unwrap(),
             is_query: false,
         };
-        let transaction1 = transaction.clone().from_deploy(SN_GOERLI_CHAIN_ID);
-        println!("this is transaction hash {}", transaction1.unwrap().hash.0);
 
         let address = transaction.clone().from_deploy(Starknet::chain_id()).unwrap().sender_address;
+        let tx_hash_new = calculate_deploy_account_braavos_tx_hash(transaction, Starknet::chain_id(), address);
+        let transaction1 = transaction.clone().from_deploy(SN_GOERLI_CHAIN_ID);
+        println!("this is transaction hash {}", transaction1.unwrap().hash.0);
+        println!("this is transaction hash {}", tx_hash_new.into());
+
         set_infinite_tokens::<MockRuntime>(address);
         set_signer(address, AccountType::V0(AccountTypeV0Inner::Braavos));
 

@@ -325,6 +325,38 @@ pub fn calculate_deploy_account_tx_hash(
     )
 }
 
+/// Computes the transaction hash of a deploy account transaction for Braavos wallet.
+///
+/// # Argument
+///
+/// * `transaction` - The deploy account transaction to get the hash of.
+pub fn calculate_deploy_account_braavos_tx_hash(
+    transaction: DeployAccountTransaction,
+    chain_id: Felt252Wrapper,
+    address: Felt252Wrapper,
+) -> Felt252Wrapper {
+    pub const BRAAVOS_ACCOUNT_CLASS_HASH_CAIRO_0: &str =
+        "0x0244ca3d9fe8b47dd565a6f4270d979ba31a7d6ff2c3bf8776198161505e8b52";
+
+    let hash = calculate_transaction_hash_common::<PedersenHasher>(
+        address,
+        &[vec![transaction.account_class_hash, transaction.salt], transaction.calldata.to_vec()].concat(),
+        transaction.max_fee,
+        transaction.nonce,
+        calculate_transaction_version_from_u8(transaction.is_query, transaction.version),
+        b"deploy_account",
+        chain_id,
+        None,
+    );
+    // let hash = FieldElement::from_bytes_be(&hash.into()).unwrap();
+    let mut parsedOtherSigner = vec![FieldElement::ZERO; 7];
+    let mut elements = vec![FieldElement::from_bytes_be(&hash.into()).unwrap()];
+    elements.push(FieldElement::from_bytes_be(&BRAAVOS_ACCOUNT_CLASS_HASH_CAIRO_0.into()).unwrap());
+    elements.append(&mut parsedOtherSigner);
+    let tx_hash = <PedersenHasher>::default().compute_hash_on_elements(&elements);
+    tx_hash.into()
+}
+
 /// Computes the transaction hash using a hash function of type T
 #[allow(clippy::too_many_arguments)]
 pub fn calculate_transaction_hash_common<T>(
