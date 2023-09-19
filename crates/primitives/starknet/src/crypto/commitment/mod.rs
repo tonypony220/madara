@@ -334,13 +334,17 @@ pub fn calculate_deploy_account_braavos_tx_hash(
     transaction: DeployAccountTransaction,
     chain_id: Felt252Wrapper,
     address: Felt252Wrapper,
+    txn_hash: Felt252Wrapper,
 ) -> Felt252Wrapper {
     pub const BRAAVOS_ACCOUNT_CLASS_HASH_CAIRO_0: &str =
         "0x0244ca3d9fe8b47dd565a6f4270d979ba31a7d6ff2c3bf8776198161505e8b52";
+    pub const BRAAVOS_PROXY_CLASS_HASH_CAIRO_0: &str = "0x06a89ae7bd72c96202c040341c1ee422474b562e1d73c6848f08cae429c33262";
+
 
     let hash = calculate_transaction_hash_common::<PedersenHasher>(
         address,
         &[vec![transaction.account_class_hash, transaction.salt], transaction.calldata.to_vec()].concat(),
+        // &[vec![transaction.account_class_hash, transaction.salt], transaction.calldata.to_vec()].concat(),
         transaction.max_fee,
         transaction.nonce,
         calculate_transaction_version_from_u8(transaction.is_query, transaction.version),
@@ -348,10 +352,12 @@ pub fn calculate_deploy_account_braavos_tx_hash(
         chain_id,
         None,
     );
+    println!("bo {}", hash.0);
+    println!("bo {}", txn_hash.0);
     // let hash = FieldElement::from_bytes_be(&hash.into()).unwrap();
     let mut parsedOtherSigner = vec![FieldElement::ZERO; 7];
-    let mut elements = vec![FieldElement::from_bytes_be(&hash.into()).unwrap()];
-    elements.push(FieldElement::from_bytes_be(&BRAAVOS_ACCOUNT_CLASS_HASH_CAIRO_0.into()).unwrap());
+    let mut elements = vec![FieldElement::from_bytes_be(&txn_hash.into()).unwrap()];
+    elements.push(FieldElement::from_str(BRAAVOS_PROXY_CLASS_HASH_CAIRO_0).unwrap());
     elements.append(&mut parsedOtherSigner);
     let tx_hash = <PedersenHasher>::default().compute_hash_on_elements(&elements);
     tx_hash.into()

@@ -252,10 +252,11 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
         };
 
         let address = transaction.clone().from_deploy(Starknet::chain_id()).unwrap().sender_address;
-        let tx_hash_new = calculate_deploy_account_braavos_tx_hash(transaction, Starknet::chain_id(), address);
-        let transaction1 = transaction.clone().from_deploy(SN_GOERLI_CHAIN_ID);
-        println!("this is transaction hash {}", transaction1.unwrap().hash.0);
-        println!("this is transaction hash {}", tx_hash_new.into());
+        let transaction1 = transaction.clone().from_deploy(SN_GOERLI_CHAIN_ID).unwrap();
+        let tx_hash_new = calculate_deploy_account_braavos_tx_hash(transaction, Starknet::chain_id(), address, transaction1.hash);
+        println!("this is transaction hash {}", transaction1.hash.0);
+        println!("this is transaction NEW  {}", tx_hash_new.0);
+        println!("this is trans  hash EXP  {}", tx_hash.0);
 
         set_infinite_tokens::<MockRuntime>(address);
         set_signer(address, AccountType::V0(AccountTypeV0Inner::Braavos));
