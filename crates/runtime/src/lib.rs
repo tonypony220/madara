@@ -108,6 +108,14 @@ mod benches {
     );
 }
 
+impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
+    where
+        RuntimeCall: From<C>,
+{
+    type Extrinsic = UncheckedExtrinsic;
+    type OverarchingCall = RuntimeCall;
+}
+
 impl_runtime_apis! {
     impl sp_api::Core<Block> for Runtime {
         fn version() -> RuntimeVersion {

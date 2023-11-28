@@ -86,11 +86,13 @@ fn test_to_block_context() {
     let fee_token_address = ContractAddress(PatriciaKey(StarkFelt::try_from("AA").unwrap()));
     // Create a chain id.
     let chain_id = ChainId("0x1".to_string());
+    let gas_price = 1;
     // Try to serialize the block header.
-    let block_context = block_header.into_block_context(fee_token_address, chain_id);
+    let block_context = block_header.into_block_context(fee_token_address, chain_id, gas_price);
     // Check that the block context was serialized correctly.
     assert_eq!(block_context.block_number, BlockNumber(1));
     assert_eq!(block_context.block_timestamp, BlockTimestamp(1));
     assert_eq!(block_context.sequencer_address, sequencer_address);
     assert_eq!(block_context.fee_token_address, fee_token_address);
+    assert_eq!(block_context.gas_price, gas_price);
 }

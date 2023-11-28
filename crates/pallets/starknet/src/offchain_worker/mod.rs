@@ -14,8 +14,11 @@ pub use types::*;
 use crate::message::get_messages_events;
 use crate::{Config, Pallet, ETHEREUM_EXECUTION_RPC};
 
+pub const ETH_PRICE_IN_GWEI: u128 = 1_000_000_000;
 pub const LAST_FINALIZED_BLOCK_QUERY: &str =
     r#"{"jsonrpc": "2.0", "method": "eth_getBlockByNumber", "params": ["finalized", true], "id": 0}"#;
+pub const LAST_GAS_PRICE_QUERY: &str = r#"{"jsonrpc": "2.0", "method": "eth_gasPrice", "params": [], "id": 1}"#;
+
 
 impl<T: Config> Pallet<T> {
     /// Fetches L1 messages and execute them.
@@ -24,13 +27,13 @@ impl<T: Config> Pallet<T> {
     /// # Returns
     /// The result of the offchain worker execution.
     pub(crate) fn process_l1_messages() -> Result<(), OffchainWorkerError> {
-        // Get the last known block from storage.
-        let last_known_eth_block = Self::last_known_eth_block().ok_or(OffchainWorkerError::NoLastKnownEthBlock)?;
         // Query L1 for the last finalized block.
         let raw_body = query_eth(LAST_FINALIZED_BLOCK_QUERY)?;
         let last_finalized_block: u64 = from_slice::<EthGetBlockByNumberResponse>(&raw_body)
             .map_err(|_| OffchainWorkerError::SerdeError)?
             .try_into()?;
+        // Get the last known block from storage.
+        let last_known_eth_block = Self::last_known_eth_block().ok_or(OffchainWorkerError::NoLastKnownEthBlock)?;
         // Check if there are new messages to be processed.
         if last_finalized_block > last_known_eth_block {
             // Read the new messages from L1.
@@ -46,6 +49,19 @@ impl<T: Config> Pallet<T> {
         }
         Ok(())
     }
+
+    /// Fetches L1 gas price and return the result in gwei.
+    pub(crate) fn fetch_gas_price() -> Result<u128, OffchainWorkerError> {
+        let raw_body = query_eth(LAST_GAS_PRICE_QUERY)?;
+        let res: EthGasPriceResponse = from_slice(&raw_body).map_err(|_| OffchainWorkerError::SerdeError)?;
+        let gas_price = u128::from_str_radix(&res.result[2..], 16)
+            .map_err(|_| OffchainWorkerError::StringConversionError)?
+            / ETH_PRICE_IN_GWEI;
+        log::info!("Gas price in gwei: {}", gas_price);
+
+        Ok(gas_price)
+    }
+
 }
 
 /// Returns Ethereum RPC URL from Storage

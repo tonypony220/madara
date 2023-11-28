@@ -72,7 +72,7 @@ impl Header {
     }
 
     /// Converts to a blockifier BlockContext
-    pub fn into_block_context(self, fee_token_address: ContractAddress, chain_id: ChainId) -> BlockContext {
+    pub fn into_block_context(self, fee_token_address: ContractAddress, chain_id: ChainId, gas_price: u128) -> BlockContext {
         BlockContext {
             chain_id,
             block_number: BlockNumber(self.block_number),
@@ -82,8 +82,7 @@ impl Header {
             fee_token_address,
             invoke_tx_max_n_steps: 1000000,
             validate_max_n_steps: 1000000,
-            // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
-            gas_price: 10,
+            gas_price,
             max_recursion_depth: 50,
         }
     }
